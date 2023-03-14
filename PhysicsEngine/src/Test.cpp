@@ -31,15 +31,14 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	Eis::Renderer2D::DrawQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(m_PhysicsSolver.GetConstraintRadius() * 2.0f), m_CircleTexture, {0.12f, 0.12f, 0.12f, 1.0f});
 
 	// Flood
-	if (m_Flood && m_PhysicsSolver.GetObjectPool().size() < 1350)
+	if (m_Flood && m_PhysicsSolver.GetObjectPool().size() < 500)
 	{
-		VerletObject obj(m_PreviewPos, m_PreviewDiameter, glm::vec2(Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)));
-		obj.SetColor({ Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f) }); // TODO: hack - .back won't return reference
-		m_PhysicsSolver.AddObject(obj);
+		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter, glm::vec2(Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)));
+		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor({Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)});
 	}
 
 	Interactions();
-	m_PhysicsSolver.Update(ts);
+	m_PhysicsSolver.Update(Eis::TimeStep(0.0136f)); // fully deterministic engine
 	RenderPhysicsObjects();
 
 	// Spawn preview
@@ -47,7 +46,7 @@ void Test::OnUpdate(Eis::TimeStep ts)
 
 	Eis::Renderer2D::EndScene();
 
-	FPSLimiter();
+//	FPSLimiter();
 }
 
 void Test::OnImGuiRender()
@@ -57,16 +56,19 @@ void Test::OnImGuiRender()
 	// Object count
 	ImGui::Text("Object count: %.0i", m_PhysicsSolver.GetObjectPool().size());
 	if (ImGui::Button("Clear Objects"))
+	{
 		m_PhysicsSolver.ClearObjects();
+		m_PhysicsSolver.ClearChainLinks();
+	}
 
 	if (ImGui::Button("Reset Movement"))
-		for (VerletObject& obj : m_PhysicsSolver.GetObjectPool())
-			obj.StopMovement();
+		for (int i = 0; i < m_PhysicsSolver.GetObjectPool().size(); i++)
+			m_PhysicsSolver.GetObjectRef(i).StopMovement();
 
 	// Set scene diameter
 	static float tmp = m_PhysicsSolver.GetConstraintRadius();
 	ImGui::Text("Constraint diameter:");
-	ImGui::SliderFloat("", &tmp, 0.001f, 10.0f);
+	ImGui::SliderFloat("", &tmp, 0.001f, 30.0f);
 	m_PhysicsSolver.SetConstraintRadius(tmp / 2.0f);
 
 	ImGui::Separator();
@@ -81,8 +83,26 @@ void Test::OnImGuiRender()
 
 	ImGui::Checkbox("Flood", &m_Flood);
 
-	// Debug info
+	// Spawn chain
+	if (ImGui::Button("Spawn chain"))
+	{
+		int lastObjId = m_PhysicsSolver.GetObjectPool().size();
+		for (int i = 0; i < 20; i++)
+			m_PhysicsSolver.AddObject({ i - 10.0f, 0.0f }, 1.0f);
+
+		for (int i = lastObjId + 1; i < lastObjId + 20; i++)
+			m_PhysicsSolver.AddChainLink(i - 1, i);
+
+		m_PhysicsSolver.GetObjectRef(lastObjId).Lock();
+		m_PhysicsSolver.GetObjectRef(lastObjId + 19).Lock();
+	}
+
+	// Performance
 	ImGui::Separator();
+
+	static int substeps = m_PhysicsSolver.GetSubsteps();
+	ImGui::SliderInt("Substeps", &substeps, 1, 16);
+	m_PhysicsSolver.SetSubsteps(substeps);
 
 	ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -109,19 +129,9 @@ void Test::Interactions()
 		safeguard |= 0b1;
 }
 
+// Eis cant draw pure circles (yet)
 void Test::RenderPhysicsObjects() const
 {
 	for (VerletObject& obj : m_PhysicsSolver.GetObjectPool())
 		Eis::Renderer2D::DrawQuad(glm::vec3(obj.GetPosition(), 1.0f), glm::vec2(obj.GetDiameter()), m_CircleTexture, glm::vec4(obj.GetColor(), 1.0f));
-}
-
-// HACK: fps limiter
-void Test::FPSLimiter()
-{
-	static std::chrono::time_point last = std::chrono::high_resolution_clock::now();
-
-	while (std::chrono::high_resolution_clock::now() - last < std::chrono::milliseconds(11))
-		Sleep(1);
-
-	last = std::chrono::high_resolution_clock::now();
 }

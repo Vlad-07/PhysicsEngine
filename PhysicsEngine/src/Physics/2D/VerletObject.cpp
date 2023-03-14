@@ -2,6 +2,9 @@
 
 void VerletObject::UpdatePosition(Eis::TimeStep ts)
 {
+	if (m_Locked)
+		return;
+
 	const glm::vec2 velocity = m_Position - m_LastPosition;
 
 	m_LastPosition = m_Position;

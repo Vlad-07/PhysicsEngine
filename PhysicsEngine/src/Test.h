@@ -23,12 +23,11 @@ public:
 
 	void Interactions();
 	void RenderPhysicsObjects() const;
-	void FPSLimiter();
 
 private:
 	Eis::OrthoCameraController m_CameraController;
 	VerletSolver m_PhysicsSolver;
-	Eis::Ref<Eis::Texture2D> m_CircleTexture; // Eis cant draw pure circles (yet)
+	Eis::Ref<Eis::Texture2D> m_CircleTexture;
 
 	glm::vec2 m_PreviewPos;
 	float m_PreviewDiameter;

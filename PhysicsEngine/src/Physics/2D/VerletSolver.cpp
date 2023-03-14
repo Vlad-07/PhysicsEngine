@@ -11,6 +11,7 @@ void VerletSolver::Update(Eis::TimeStep ts)
 	for (uint32_t i = m_SubSteps; i; i--)
 	{
 		ApplyGravity();
+		UpdateChains();
 		Constraint();
 		SolveColisions();
 		UpdatePositions(subTs);
@@ -21,6 +22,12 @@ void VerletSolver::UpdatePositions(Eis::TimeStep ts)
 {
 	for (VerletObject& obj : m_PhysicsObjectPool)
 		obj.UpdatePosition(ts);
+}
+
+void VerletSolver::UpdateChains()
+{
+	for (ChainLink& link : m_ChainLinkPool)
+		link.Apply();
 }
 
 void VerletSolver::ApplyGravity()
