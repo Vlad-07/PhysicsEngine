@@ -1,6 +1,6 @@
 #include "Test.h"
 
-Test::Test() : Layer("PhysicsTest"), m_CameraController(16.0f / 9.0f), m_PreviewPos(0.0f), m_PreviewDiameter(1.0f), m_Flood(false)
+Test::Test() : Layer("PhysicsTest"), m_CameraController(16.0f / 9.0f), m_PreviewPos(0.0f), m_PreviewDiameter(1.0f), m_Flood(false), m_Img("assets/textures/nazi.png"), m_ColorMem()
 {}
 
 void Test::OnAttach()
@@ -31,9 +31,9 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	Eis::Renderer2D::DrawQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(m_PhysicsSolver.GetConstraintRadius() * 2.0f), m_CircleTexture, {0.12f, 0.12f, 0.12f, 1.0f});
 
 	// Flood
-	if (m_Flood && m_PhysicsSolver.GetObjectPool().size() < 500)
+	if (m_Flood)
 	{
-		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter, glm::vec2(Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)));
+		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter, glm::vec3(FLT_EPSILON));
 		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor({Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)});
 	}
 
@@ -45,8 +45,6 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	Eis::Renderer2D::DrawQuad(glm::vec3(m_PreviewPos, 1.0f), glm::vec2(m_PreviewDiameter), m_CircleTexture, { 1.0f, 1.0f, 1.0f, 0.3f });
 
 	Eis::Renderer2D::EndScene();
-
-//	FPSLimiter();
 }
 
 void Test::OnImGuiRender()
@@ -76,7 +74,7 @@ void Test::OnImGuiRender()
 	// Spawn new object
 	ImGui::SliderFloat2("Spawn pos", (float*)&m_PreviewPos, -m_PhysicsSolver.GetConstraintRadius(), m_PhysicsSolver.GetConstraintRadius());
 	ImGui::SliderFloat("Diameter", &m_PreviewDiameter, 0.1f, 10.0f);
-	if (ImGui::Button("Safe Spawn") && !m_PhysicsSolver.CheckCollision(m_PreviewPos, m_PreviewDiameter / 2.0f))
+	if (ImGui::Button("Safe Spawn") && !m_PhysicsSolver.CheckCollision(m_PreviewPos, m_PreviewDiameter))
 		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter);
 	if (ImGui::Button("Force Spawn"))
 		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter);
@@ -105,6 +103,34 @@ void Test::OnImGuiRender()
 	m_PhysicsSolver.SetSubsteps(substeps);
 
 	ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+	ImGui::End();
+
+	//--------------------------------------------------------------------------------
+
+	ImGui::Begin("Image Generator");
+
+	static bool spawn = false;
+	ImGui::Checkbox("Spawn", &spawn);
+	if (spawn && m_PhysicsSolver.GetObjectPool().size() < 500 && !m_PhysicsSolver.CheckCollision({ 0.0f, 12.0f }, 1.0f))
+	{
+		m_PhysicsSolver.AddObject({0.0f, 12.0f}, 1.0f, glm::vec2(FLT_EPSILON, -25000.0f));
+		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor(m_ColorMem[m_PhysicsSolver.GetObjectPool().size() - 1]);
+	}
+
+	if (ImGui::Button("Color"))
+	{
+		for (int i = 0; i < m_PhysicsSolver.GetObjectPool().size(); i++)
+		{
+			int x = (int)m_PhysicsSolver.GetObjectRef(i).GetPosition().x + 12;
+			int y = (int)m_PhysicsSolver.GetObjectRef(i).GetPosition().y + 12;
+
+			m_PhysicsSolver.GetObjectRef(i).SetColor(m_Img.GetPixel(x, y) / 255.0f);
+			m_ColorMem[i] = m_PhysicsSolver.GetObjectRef(i).GetColor();
+
+			glm::vec3 color = m_ColorMem[i];
+		}
+	}
 
 	ImGui::End();
 }

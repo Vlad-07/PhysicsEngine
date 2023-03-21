@@ -1,7 +1,7 @@
 #include "VerletSolver.h"
 
 
-VerletSolver::VerletSolver() : m_Gravity(glm::vec2(0.0f, -10.0f)), m_SubSteps(8), m_ConstraintRadius(4.0f)
+VerletSolver::VerletSolver() : m_Gravity(glm::vec2(0.0f, -10.0f)), m_SubSteps(4), m_ConstraintRadius(4.0f)
 {}
 
 
@@ -76,14 +76,14 @@ void VerletSolver::SolveColisions()
 	}
 }
 
-bool VerletSolver::CheckCollision(glm::vec2 pos, float radius)
+bool VerletSolver::CheckCollision(glm::vec2 pos, float diameter)
 {
 	for (uint32_t i = 0; i < m_PhysicsObjectPool.size(); i++)
 	{
 		VerletObject& obj = m_PhysicsObjectPool[i];
 		const glm::vec2 collisionAxis = obj.GetPosition() - pos;
 		const float dist = glm::length(collisionAxis);
-		const float minDist = obj.GetRadius() + radius;
+		const float minDist = obj.GetRadius() + diameter / 2.0f;
 
 		if (dist < minDist)
 			return true;

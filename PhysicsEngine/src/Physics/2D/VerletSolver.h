@@ -18,7 +18,7 @@ public:
 	void Constraint();
 	void SolveColisions();
 
-	bool CheckCollision(glm::vec2 pos, float radius);
+	bool CheckCollision(glm::vec2 pos, float diameter);
 
 	void AddObject(glm::vec2 pos = glm::vec2(0.0f), float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f)) { m_PhysicsObjectPool.push_back(VerletObject(pos, diameter, accel)); }
 	void AddObject(const VerletObject& obj) { m_PhysicsObjectPool.push_back(obj); }

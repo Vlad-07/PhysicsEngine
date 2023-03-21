@@ -33,4 +33,7 @@ private:
 	float m_PreviewDiameter;
 
 	bool m_Flood;
+
+	glm::vec3 m_ColorMem[500];
+	Eis::Image m_Img;
 };
