@@ -34,6 +34,8 @@ private:
 
 	bool m_Flood;
 
-	glm::vec3 m_ColorMem[500];
+	int m_PhysicsSubsteps;
+
+	glm::vec3 m_ColorMem[5000];
 	Eis::Image m_Img;
 };

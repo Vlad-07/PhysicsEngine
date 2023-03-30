@@ -1,6 +1,6 @@
 #include "Test.h"
 
-Test::Test() : Layer("PhysicsTest"), m_CameraController(16.0f / 9.0f), m_PreviewPos(0.0f), m_PreviewDiameter(1.0f), m_Flood(false), m_Img("assets/textures/nazi.png"), m_ColorMem()
+Test::Test() : Layer("PhysicsTest"), m_CameraController(16.0f / 9.0f), m_PreviewPos(0.0f), m_PreviewDiameter(1.0f), m_PhysicsSubsteps(8), m_Flood(false), m_Img("assets/textures/cat.png"), m_ColorMem()
 {}
 
 void Test::OnAttach()
@@ -10,8 +10,6 @@ void Test::OnAttach()
 	EIS_INFO("Loaded assets!");
 
 	m_CameraController.OnEvent(Eis::MouseScrolledEvent(0.0f, -90.0f)); // HACK: artificial camera zoom
-
-	m_PhysicsSolver.SetConstraintRadius(25.0f);
 }
 
 void Test::OnDetach()
@@ -22,27 +20,30 @@ void Test::OnUpdate(Eis::TimeStep ts)
 {
 	m_CameraController.OnUpdate(ts);
 
-	Eis::RenderCommands::SetClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
+	Eis::RenderCommands::SetClearColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
 	Eis::RenderCommands::Clear();
 
 	Eis::Renderer2D::BeginScene(m_CameraController.GetCamera());
 
 	// Background
-	Eis::Renderer2D::DrawQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(m_PhysicsSolver.GetConstraintRadius() * 2.0f), m_CircleTexture, {0.12f, 0.12f, 0.12f, 1.0f});
+	Eis::Renderer2D::DrawQuad(glm::vec2(0.0f), m_PhysicsSolver.GetConstraintDimensions() * 2.0f, glm::vec4(0.12f, 0.12f, 0.12f, 1.0f));
 
 	// Flood
 	if (m_Flood)
 	{
-		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter, glm::vec3(FLT_EPSILON));
-		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor({Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f), Eis::Random::Float(0.0f, 1.0f)});
+		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec3(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec3(FLT_EPSILON));
+
+		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec3(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec3(FLT_EPSILON));
 	}
 
 	Interactions();
-	m_PhysicsSolver.Update(Eis::TimeStep(0.0136f)); // fully deterministic engine
+	m_PhysicsSolver.UpdateSubStepped(Eis::TimeStep(0.0136f), m_PhysicsSubsteps); // fully deterministic engine
 	RenderPhysicsObjects();
 
 	// Spawn preview
-	Eis::Renderer2D::DrawQuad(glm::vec3(m_PreviewPos, 1.0f), glm::vec2(m_PreviewDiameter), m_CircleTexture, { 1.0f, 1.0f, 1.0f, 0.3f });
+	Eis::Renderer2D::DrawQuad(glm::vec3(m_PreviewPos, 1.0f), glm::vec2(m_PreviewDiameter), m_CircleTexture, glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
 
 	Eis::Renderer2D::EndScene();
 }
@@ -63,18 +64,20 @@ void Test::OnImGuiRender()
 		for (int i = 0; i < m_PhysicsSolver.GetObjectPool().size(); i++)
 			m_PhysicsSolver.GetObjectRef(i).StopMovement();
 
-	// Set scene diameter
-	static float tmp = m_PhysicsSolver.GetConstraintRadius();
-	ImGui::Text("Constraint diameter:");
-	ImGui::SliderFloat("", &tmp, 0.001f, 30.0f);
-	m_PhysicsSolver.SetConstraintRadius(tmp / 2.0f);
+	// Set scene dimensions
+	static glm::vec2 tmp = m_PhysicsSolver.GetConstraintDimensions();
+	ImGui::Text("Constraint dimensions:");
+	ImGui::SliderFloat2("", &tmp.x, 0.001f, 60.0f);
+	m_PhysicsSolver.SetConstraintDimensions(tmp / 2.0f);
 
 	ImGui::Separator();
 
 	// Spawn new object
-	ImGui::SliderFloat2("Spawn pos", (float*)&m_PreviewPos, -m_PhysicsSolver.GetConstraintRadius(), m_PhysicsSolver.GetConstraintRadius());
+	float maxDim = std::max(m_PhysicsSolver.GetConstraintDimensions().x, m_PhysicsSolver.GetConstraintDimensions().y);
+	ImGui::SliderFloat2("Spawn pos", (float*)&m_PreviewPos, -maxDim, maxDim); // TODO: x-y specific limits
 	ImGui::SliderFloat("Diameter", &m_PreviewDiameter, 0.1f, 10.0f);
-	if (ImGui::Button("Safe Spawn") && !m_PhysicsSolver.CheckCollision(m_PreviewPos, m_PreviewDiameter))
+
+	if (ImGui::Button("Safe Spawn") && !m_PhysicsSolver.CheckCollision(m_PreviewPos, m_PreviewDiameter / 2))
 		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter);
 	if (ImGui::Button("Force Spawn"))
 		m_PhysicsSolver.AddObject(m_PreviewPos, m_PreviewDiameter);
@@ -98,38 +101,102 @@ void Test::OnImGuiRender()
 	// Performance
 	ImGui::Separator();
 
-	static int substeps = m_PhysicsSolver.GetSubsteps();
-	ImGui::SliderInt("Substeps", &substeps, 1, 16);
-	m_PhysicsSolver.SetSubsteps(substeps);
+	ImGui::SliderInt("Substeps", &m_PhysicsSubsteps, 1, 16);
 
 	ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	ImGui::End();
 
-	//--------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------
 
 	ImGui::Begin("Image Generator");
 
+	static int maxObjects = 500;
+	static float objDiameter = 1.0f;
+	static int quality = 2; int q = quality;
+	ImGui::SliderInt("Quality", &quality, 1, 4);
+	quality = m_PhysicsSolver.GetObjectPool().size() ? q : quality;
+
+	switch (quality)
+	{
+	case 1:
+		maxObjects = 280;
+		objDiameter = 1.5f;
+		break;
+
+	case 2:
+		maxObjects = 1000;
+		objDiameter = 1.0f;
+		break;
+
+	case 3:
+		maxObjects = 2700;
+		objDiameter = 0.5f;
+		break;
+
+	case 4:
+		maxObjects = 5000;
+		objDiameter = 0.25f;
+		break;
+
+	default:
+		EIS_ERROR("Invalid image quality selected!");
+	}
+
 	static bool spawn = false;
 	ImGui::Checkbox("Spawn", &spawn);
-	if (spawn && m_PhysicsSolver.GetObjectPool().size() < 500 && !m_PhysicsSolver.CheckCollision({ 0.0f, 12.0f }, 1.0f))
+	if (spawn && m_PhysicsSolver.GetObjectPool().size() < maxObjects)
 	{
-		m_PhysicsSolver.AddObject({0.0f, 12.0f}, 1.0f, glm::vec2(FLT_EPSILON, -25000.0f));
-		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor(m_ColorMem[m_PhysicsSolver.GetObjectPool().size() - 1]);
+		for (int i = 0; i <= m_PhysicsSolver.GetObjectPool().size() / 100 && m_PhysicsSolver.GetObjectPool().size() < maxObjects; i++)
+		{
+			if (!m_PhysicsSolver.CheckCollision({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * 0.8f - i * objDiameter }, objDiameter))
+			{
+				m_PhysicsSolver.AddObject({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * 0.8f - i * objDiameter }, objDiameter, glm::vec2(20000.0f, 0.0f));
+				m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor(m_ColorMem[m_PhysicsSolver.GetObjectPool().size() - 1]);
+			}
+		}
 	}
 
 	if (ImGui::Button("Color"))
 	{
 		for (int i = 0; i < m_PhysicsSolver.GetObjectPool().size(); i++)
 		{
-			int x = (int)m_PhysicsSolver.GetObjectRef(i).GetPosition().x + 12;
-			int y = (int)m_PhysicsSolver.GetObjectRef(i).GetPosition().y + 12;
+			// Turn world space coords to a [0, 1] range
+			float x = (m_PhysicsSolver.GetObjectRef(i).GetPosition().x / m_PhysicsSolver.GetConstraintDimensions().x + 1.0f) / 2.0f;
+			float y = (m_PhysicsSolver.GetObjectRef(i).GetPosition().y / m_PhysicsSolver.GetConstraintDimensions().y + 1.0f) / 2.0f;
 
-			m_PhysicsSolver.GetObjectRef(i).SetColor(m_Img.GetPixel(x, y) / 255.0f);
+			// And multiply by the image size to get pixel coords
+			x *= m_Img.GetWidth();
+			y *= m_Img.GetHeight();
+
+			// More objects than the colorMem size can trigger an exception in GetPixel
+			m_PhysicsSolver.GetObjectRef(i).SetColor(m_Img.GetPixel((int)x, (int)y) / 255.0f);
 			m_ColorMem[i] = m_PhysicsSolver.GetObjectRef(i).GetColor();
 
 			glm::vec3 color = m_ColorMem[i];
 		}
+	}
+
+	ImGui::End();
+
+	//-----------------------------------------------------------------------------------------------------
+
+	ImGui::Begin("Double Pendulum");
+
+	static bool collisions = true;
+	ImGui::Checkbox("Collisions", &collisions);
+	m_PhysicsSolver.SetCollisionDetection(collisions);
+
+	if (ImGui::Button("Spawn pendulum"))
+	{
+		m_PhysicsSolver.AddObject(glm::vec2(0.0f));
+		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).Lock();
+
+		m_PhysicsSolver.AddObject(glm::vec2(0.0f, -5.0f));
+		m_PhysicsSolver.AddChainLink(m_PhysicsSolver.GetObjectPool().size() - 2, m_PhysicsSolver.GetObjectPool().size() - 1, 5.0f);
+
+		m_PhysicsSolver.AddObject(glm::vec2(0.001f));
+		m_PhysicsSolver.AddChainLink(m_PhysicsSolver.GetObjectPool().size() - 2, m_PhysicsSolver.GetObjectPool().size() - 1, 5.0f);
 	}
 
 	ImGui::End();
