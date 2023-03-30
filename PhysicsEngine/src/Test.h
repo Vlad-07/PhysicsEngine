@@ -21,8 +21,8 @@ public:
 	void OnImGuiRender() override;
 	void OnEvent(Eis::Event& e) override;
 
-	void Interactions();
 	void RenderPhysicsObjects() const;
+	void DebugGrid();
 
 private:
 	Eis::OrthoCameraController m_CameraController;
@@ -35,7 +35,8 @@ private:
 	bool m_Flood;
 
 	int m_PhysicsSubsteps;
+	bool m_DebugGrid;
 
-	glm::vec3 m_ColorMem[5000];
+	glm::vec3 m_ColorMem[11700];
 	Eis::Image m_Img;
 };

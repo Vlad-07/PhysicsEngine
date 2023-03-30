@@ -18,3 +18,13 @@ void VerletObject::Accelerate(glm::vec2 accel)
 {
 	m_Acceleration += accel;
 }
+
+bool VerletObject::operator==(const VerletObject& obj)
+{
+	return (m_Id == obj.GetId());
+}
+
+bool VerletObject::operator!=(const VerletObject& obj)
+{
+	return (m_Id != obj.GetId());
+}
