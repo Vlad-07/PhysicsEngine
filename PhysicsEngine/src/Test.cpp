@@ -2,7 +2,7 @@
 
 Test::Test()
 	: Layer("PhysicsTest"), m_CameraController(16.0f / 9.0f), m_PreviewPos(0.0f),
-	  m_PreviewDiameter(1.0f), m_PhysicsSubsteps(8), m_Flood(false), m_Img("assets/textures/cat.png"), m_ColorMem(), m_DebugGrid(false)
+	  m_PreviewDiameter(1.0f), m_PhysicsSubsteps(8), m_Flood(false), m_Img("assets/textures/cat.png"), m_ColorMem(), m_DebugGrid(false), m_ThreadCount(1)
 {}
 
 void Test::OnAttach()
@@ -40,7 +40,7 @@ void Test::OnUpdate(Eis::TimeStep ts)
 		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec2(FLT_EPSILON));
 	}
 
-	m_PhysicsSolver.UpdateSubStepped(Eis::TimeStep(0.0136f), m_PhysicsSubsteps); // fully deterministic engine
+	m_PhysicsSolver.UpdatePhysics(Eis::TimeStep(0.0136f), m_PhysicsSubsteps); // fully deterministic engine
 
 	if (m_DebugGrid) DebugGrid();
 
@@ -108,6 +108,9 @@ void Test::OnImGuiRender()
 	static bool gridEnabled = m_PhysicsSolver.GetGridStatus();
 	ImGui::Checkbox("Enable Grid", &gridEnabled); m_PhysicsSolver.SetGridStatus(gridEnabled);
 	ImGui::Checkbox("Debug Grid", &m_DebugGrid);
+	ImGui::BeginDisabled();
+	ImGui::SliderInt("Thread Count", &m_ThreadCount, 1, 16);
+	ImGui::EndDisabled();
 	ImGui::SliderInt("Substeps", &m_PhysicsSubsteps, 1, 16);
 
 	ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -127,12 +130,12 @@ void Test::OnImGuiRender()
 	switch (quality)
 	{
 	case 1:
-		maxObjects = 1200;
+		maxObjects = 1300;
 		objDiameter = 1.5f;
 		break;
 
 	case 2:
-		maxObjects = 3000;
+		maxObjects = 2800;
 		objDiameter = 1.0f;
 		break;
 
@@ -150,11 +153,11 @@ void Test::OnImGuiRender()
 	if (spawn && m_PhysicsSolver.GetObjectPool().size() < maxObjects)
 	{
 		const float ySpawnPos = 0.9f;
-		for (int i = 0; i <= m_PhysicsSolver.GetObjectPool().size() / 100 && m_PhysicsSolver.GetObjectPool().size() < maxObjects && i < 20; i++)
+		for (int i = 0; i <= m_PhysicsSolver.GetObjectPool().size() / 100 && m_PhysicsSolver.GetObjectPool().size() < maxObjects && i < 10; i++)
 		{
-			if (!m_PhysicsSolver.CheckCollision({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter }, objDiameter))
+			if (!m_PhysicsSolver.CheckCollision({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter * 1.5f }, objDiameter))
 			{
-				m_PhysicsSolver.AddObject({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter }, objDiameter, glm::vec2(50000.0f, 0.0f));
+				m_PhysicsSolver.AddObject({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter * 1.5f }, objDiameter, glm::vec2(50000.0f, 0.0f));
 				m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor(m_ColorMem[m_PhysicsSolver.GetObjectPool().size() - 1]);
 			}
 		}
@@ -219,8 +222,9 @@ void Test::RenderPhysicsObjects() const
 
 void Test::DebugGrid()
 {
-	for (int y = 0; y < m_PhysicsSolver.GetGrid().size(); y++)
-		for (int x = 0; x < m_PhysicsSolver.GetGrid()[0].size(); x++)
+	for (int y = 0; y < m_PhysicsSolver.GetGrid().GetHeight(); y++)
+	{
+		for (int x = 0; x < m_PhysicsSolver.GetGrid().GetWidth(); x++)
 		{
 			glm::vec4 color;
 			if (m_PhysicsSolver.GetGrid()[y][x].objects.size())
@@ -230,4 +234,5 @@ void Test::DebugGrid()
 
 			Eis::Renderer2D::DrawQuad({ x * 2 - m_PhysicsSolver.GetConstraintDimensions().x + 1.0f, y * 2 - m_PhysicsSolver.GetConstraintDimensions().y + 1.0f }, glm::vec2(2.0f), color);
 		}
+	}
 }

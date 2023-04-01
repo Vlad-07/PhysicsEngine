@@ -1,9 +1,10 @@
 #include "VerletSolver.h"
 
 
-VerletSolver::VerletSolver() : m_Gravity(glm::vec2(0.0f, -50.0f)), m_ConstraintDimensions(25.0f), m_Collisions(true), m_EnableGridPartitioning(false)
+VerletSolver::VerletSolver()
+	: m_Gravity(glm::vec2(0.0f, -50.0f)), m_ConstraintDimensions(25.0f), m_Collisions(true), m_EnableGridPartitioning(true)
 {
-	m_Grid = std::vector<std::vector<GridCell>>((int)m_ConstraintDimensions.y, std::vector<GridCell>((int)m_ConstraintDimensions.x));
+	m_Grid.SetGridSize((int)m_ConstraintDimensions.x, (int)m_ConstraintDimensions.y);
 }
 
 void VerletSolver::Update(Eis::TimeStep ts)
@@ -12,11 +13,20 @@ void VerletSolver::Update(Eis::TimeStep ts)
 	ApplyGravity();
 	UpdateChains();
 	Constraint();
-	m_EnableGridPartitioning ? UpdateGrid(), FindCollisionsGrid() : FindColisions_SLOW();
+	if (m_Collisions)
+	{
+		if (m_EnableGridPartitioning)
+		{
+			UpdateGrid();
+			FindCollisionsGrid();
+		}
+		else
+			FindColisions_SLOW();
+	}
 	UpdatePositions(ts);
 }
 
-void VerletSolver::UpdateSubStepped(Eis::TimeStep ts, int subSteps)
+void VerletSolver::UpdatePhysics(Eis::TimeStep ts, int subSteps)
 {
 	Eis::TimeStep subTs(ts.GetSeconds() / subSteps);
 	for (; subSteps; subSteps--)
@@ -61,9 +71,6 @@ void VerletSolver::Constraint()
 
 void VerletSolver::FindColisions_SLOW()
 {
-	if (!m_Collisions)
-		return;
-
 	for (uint32_t i = 0; i < m_PhysicsObjectPool.size(); i++)
 	{
 		VerletObject& obj1 = m_PhysicsObjectPool[i];
@@ -79,9 +86,7 @@ void VerletSolver::FindColisions_SLOW()
 
 void VerletSolver::UpdateGrid()
 {
-	for (auto& v : m_Grid)
-		for (auto& cell : v)
-			cell.objects.clear();
+	m_Grid.FlushGrid();
 
 	for (int i = 0; i < m_PhysicsObjectPool.size(); i++)
 	{
@@ -96,9 +101,9 @@ void VerletSolver::UpdateGrid()
 
 void VerletSolver::FindCollisionsGrid()
 {
-	for (uint32_t y = 0; y < m_Grid.size(); y++)
+	for (uint32_t y = 0; y < m_Grid.GetHeight(); y++)
 	{
-		for (uint32_t x = 0; x < m_Grid[0].size(); x++)
+		for (uint32_t x = 0; x < m_Grid.GetWidth(); x++)
 		{
 			const GridCell& currentCell = m_Grid[y][x];
 
@@ -106,7 +111,7 @@ void VerletSolver::FindCollisionsGrid()
 			{
 				for (int32_t dx = -1; dx <= 1; dx++)
 				{
-					if (y + dy < 0 || x + dx < 0 || y + dy >= m_Grid.size() || x + dx >= m_Grid[0].size())
+					if (y + dy < 0 || x + dx < 0 || y + dy >= m_Grid.GetHeight() || x + dx >= m_Grid.GetWidth())
 						continue;
 
 					const GridCell& otherCell = m_Grid[y + dy][x + dx];
@@ -157,7 +162,20 @@ bool VerletSolver::CheckCollision(glm::vec2 pos, float radius)
 	}
 	return false;
 }
+bool VerletSolver::CheckCollision(const VerletObject& obj)
+{
+	for (uint32_t i = 0; i < m_PhysicsObjectPool.size(); i++)
+	{
+		VerletObject& obj2 = m_PhysicsObjectPool[i];
+		const glm::vec2 collisionAxis = obj.GetPosition() - obj2.GetPosition();
+		const float dist = glm::length(collisionAxis);
+		const float minDist = obj.GetRadius() + obj2.GetRadius();
 
+		if (dist < minDist)
+			return true;
+	}
+	return false;
+}
 bool VerletSolver::CheckCollision(const VerletObject& obj1, const VerletObject& obj2)
 {
 	const glm::vec2 collisionAxis = obj1.GetPosition() - obj2.GetPosition();

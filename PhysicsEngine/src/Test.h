@@ -34,9 +34,10 @@ private:
 
 	bool m_Flood;
 
+	int m_ThreadCount;
 	int m_PhysicsSubsteps;
 	bool m_DebugGrid;
 
-	glm::vec3 m_ColorMem[11700];
+	glm::vec3 m_ColorMem[11500];
 	Eis::Image m_Img;
 };
