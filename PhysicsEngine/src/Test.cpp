@@ -7,10 +7,7 @@ Test::Test()
 
 void Test::OnAttach()
 {
-	EIS_INFO("Loading assets...");
-	m_CircleTexture = Eis::Texture2D::Create("assets/textures/circle.png");
-	EIS_INFO("Loaded assets!");
-
+	Eis::RenderCommands::Disable(0x0B71); // GL_DEPTH_TEST
 	m_CameraController.OnEvent(Eis::MouseScrolledEvent(0.0f, -130.0f)); // HACK: artificial camera zoom
 }
 
@@ -28,7 +25,7 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	Eis::Renderer2D::BeginScene(m_CameraController.GetCamera());
 
 	// Background
-	if (!m_DebugGrid) Eis::Renderer2D::DrawQuad(glm::vec2(0.0f), m_PhysicsSolver.GetConstraintDimensions() * 2.0f, glm::vec4(0.06f, 0.06f, 0.06f, 0.5f));
+	if (!m_DebugGrid) Eis::Renderer2D::DrawQuad(glm::vec3(0.0f, 0.0f, -0.1f), m_PhysicsSolver.GetConstraintDimensions() * 2.0f, glm::vec4(0.06f, 0.06f, 0.06f, 0.5f));
 
 	// Flood
 	if (m_Flood)
@@ -47,7 +44,7 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	RenderPhysicsObjects();
 
 	// Spawn preview
-	Eis::Renderer2D::DrawQuad(glm::vec3(m_PreviewPos, 1.0f), glm::vec2(m_PreviewDiameter), m_CircleTexture, glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
+	Eis::Renderer2D::DrawCircle(m_PreviewPos, glm::vec2(m_PreviewDiameter), glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
 
 	Eis::Renderer2D::EndScene();
 }
@@ -213,11 +210,10 @@ void Test::OnEvent(Eis::Event& e)
 	m_CameraController.OnEvent(e);
 }
 
-// Eis cant draw pure circles (yet)
 void Test::RenderPhysicsObjects() const
 {
 	for (VerletObject& obj : m_PhysicsSolver.GetObjectPool())
-		Eis::Renderer2D::DrawQuad(glm::vec3(obj.GetPosition(), 1.0f), glm::vec2(obj.GetDiameter()), m_CircleTexture, glm::vec4(obj.GetColor(), 1.0f));
+		Eis::Renderer2D::DrawCircle(obj.GetPosition(), glm::vec2(obj.GetDiameter()), glm::vec4(obj.GetColor(), 1.0f));
 }
 
 void Test::DebugGrid()
@@ -230,7 +226,7 @@ void Test::DebugGrid()
 			if (m_PhysicsSolver.GetGrid()[y][x].objects.size())
 				color = glm::vec4(0.2f, 0.8f, 0.2f, 0.8f);
 			else
-				color = glm::vec4(0.2f, 0.2f, 0.2f, 0.8f);
+				color = glm::vec4(0.06f, 0.06f, 0.06f, 0.5f);
 
 			Eis::Renderer2D::DrawQuad({ x * 2 - m_PhysicsSolver.GetConstraintDimensions().x + 1.0f, y * 2 - m_PhysicsSolver.GetConstraintDimensions().y + 1.0f }, glm::vec2(2.0f), color);
 		}

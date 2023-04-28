@@ -27,7 +27,6 @@ public:
 private:
 	Eis::OrthoCameraController m_CameraController;
 	VerletSolver m_PhysicsSolver;
-	Eis::Ref<Eis::Texture2D> m_CircleTexture;
 
 	glm::vec2 m_PreviewPos;
 	float m_PreviewDiameter;
