@@ -45,3 +45,4 @@ imgui.ini
 bin/
 bin-int/
 PhysicsEngine/assets/textures/x.png
+*.json
