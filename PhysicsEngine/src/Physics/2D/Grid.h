@@ -28,6 +28,10 @@ public:
 	{
 		return m_InternalGrid[i];
 	}
+	const std::vector<GridCell>& operator[](int i) const
+	{
+		return m_InternalGrid[i];
+	}
 
 private:
 	std::vector<std::vector<GridCell>> m_InternalGrid;

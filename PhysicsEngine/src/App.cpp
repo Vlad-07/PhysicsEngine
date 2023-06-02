@@ -1,14 +1,15 @@
 #include <Eis.h>
 #include <Eis/Core/EntryPoint.h>
 
-#include "Test.h"
+#include "Test/Test.h"
+#include "Armor/Armor.h"
 
 class App : public Eis::Application
 {
 public:
 	App()
 	{
-		PushLayer(new Test());
+		PushLayer(new Armor());
 	}
 
 	~App() = default;

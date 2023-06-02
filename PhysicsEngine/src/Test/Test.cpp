@@ -39,9 +39,9 @@ void Test::OnUpdate(Eis::TimeStep ts)
 
 	m_PhysicsSolver.UpdatePhysics(Eis::TimeStep(0.0136f), m_PhysicsSubsteps); // fully deterministic engine
 
-	if (m_DebugGrid) DebugGrid();
+	if (m_DebugGrid) m_PhysicsSolver.DebugGrid();
 
-	RenderPhysicsObjects();
+	m_PhysicsSolver.RenderPhysicsObjects();
 
 	// Spawn preview
 	Eis::Renderer2D::DrawCircle(m_PreviewPos, glm::vec2(m_PreviewDiameter), glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
@@ -208,27 +208,4 @@ void Test::OnImGuiRender()
 void Test::OnEvent(Eis::Event& e)
 {
 	m_CameraController.OnEvent(e);
-}
-
-void Test::RenderPhysicsObjects() const
-{
-	for (VerletObject& obj : m_PhysicsSolver.GetObjectPool())
-		Eis::Renderer2D::DrawCircle(obj.GetPosition(), glm::vec2(obj.GetDiameter()), glm::vec4(obj.GetColor(), 1.0f));
-}
-
-void Test::DebugGrid()
-{
-	for (int y = 0; y < m_PhysicsSolver.GetGrid().GetHeight(); y++)
-	{
-		for (int x = 0; x < m_PhysicsSolver.GetGrid().GetWidth(); x++)
-		{
-			glm::vec4 color;
-			if (m_PhysicsSolver.GetGrid()[y][x].objects.size())
-				color = glm::vec4(0.2f, 0.8f, 0.2f, 0.8f);
-			else
-				color = glm::vec4(0.06f, 0.06f, 0.06f, 0.5f);
-
-			Eis::Renderer2D::DrawQuad({ x * 2 - m_PhysicsSolver.GetConstraintDimensions().x + 1.0f, y * 2 - m_PhysicsSolver.GetConstraintDimensions().y + 1.0f }, glm::vec2(2.0f), color);
-		}
-	}
 }

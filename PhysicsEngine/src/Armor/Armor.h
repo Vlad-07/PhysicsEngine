@@ -1,19 +1,17 @@
 #pragma once
 
 #include <Eis.h>
-
 #include <imgui.h>
 
 #include "Physics/2D/VerletSolver.h"
-#include "Physics/2D/VerletObject.h"
 
-#include <vector>
+// (un)realistic armor simulation
 
-class Test : public Eis::Layer
+class Armor : public Eis::Layer
 {
 public:
-	Test();
-	virtual ~Test() = default;
+	Armor();
+	virtual ~Armor() = default;
 
 	void OnAttach() override;
 	void OnDetach() override;
@@ -21,22 +19,20 @@ public:
 	void OnImGuiRender() override;
 	void OnEvent(Eis::Event& e) override;
 
-	void RenderPhysicsObjects() const;
-	void DebugGrid();
-
 private:
 	Eis::OrthoCameraController m_CameraController;
 	VerletSolver m_PhysicsSolver;
 
-	glm::vec2 m_PreviewPos;
-	float m_PreviewDiameter;
-
-	bool m_Flood;
-
-	int m_ThreadCount;
 	int m_PhysicsSubsteps;
 	bool m_DebugGrid;
 
-	glm::vec3 m_ColorMem[11500];
-	Eis::Image m_Img;
+	bool m_ProjectileActive;
+
+	glm::ivec2 m_ArmorSize;
+	float m_ArmorRadius;
+	float m_ArmorHardness;
+	float m_ArmorResistance;
+	float m_Slope;
+
+	float m_ShellRadius;
 };

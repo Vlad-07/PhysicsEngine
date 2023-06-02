@@ -2,7 +2,7 @@
 
 
 VerletSolver::VerletSolver()
-	: m_Gravity(glm::vec2(0.0f, -50.0f)), m_ConstraintDimensions(25.0f), m_Collisions(true), m_EnableGridPartitioning(true)
+	: m_Gravity(glm::vec2(0.0f, -50.0f)), m_ConstraintDimensions(25.0f), m_Collisions(true), m_EnableGridPartitioning(true), m_Pause(false)
 {
 	m_Grid.SetGridSize((int)m_ConstraintDimensions.x, (int)m_ConstraintDimensions.y);
 }
@@ -28,6 +28,36 @@ void VerletSolver::Update(Eis::TimeStep ts)
 
 void VerletSolver::UpdatePhysics(Eis::TimeStep ts, int subSteps)
 {
+	// Pause and step management
+	{
+		static uint8_t safeguard = 0b11;
+		if (Eis::Input::IsKeyPressed(EIS_KEY_P))
+		{
+			if (safeguard & BIT(0))
+				m_Pause = !m_Pause, safeguard ^= BIT(0);
+		}
+		else
+			safeguard |= BIT(0);
+
+		if (Eis::Input::IsKeyPressed(EIS_KEY_O))
+		{
+			if (safeguard & BIT(1))
+			{
+				safeguard ^= BIT(1);
+				m_Pause = true;
+				goto _Step;
+			}
+		}
+		else
+			safeguard |= BIT(1);
+
+		if (m_Pause)
+			return;
+
+	_Step:;
+	}
+
+
 	Eis::TimeStep subTs(ts.GetSeconds() / subSteps);
 	for (; subSteps; subSteps--)
 		Update(subTs);
@@ -48,7 +78,7 @@ void VerletSolver::UpdateChains()
 void VerletSolver::ApplyGravity()
 {
 	for (VerletObject& obj : m_PhysicsObjectPool)
-		obj.Accelerate(m_Gravity);
+		obj.Accelerate(m_Gravity * (float)obj.GetGravityInfl());
 }
 
 void VerletSolver::Constraint()
@@ -144,8 +174,12 @@ void VerletSolver::SolveCollision(VerletObject& obj1, VerletObject& obj2)
 	const glm::vec2 n = collisionAxis / dist;
 	const float minDist = obj1.GetRadius() + obj2.GetRadius();
 	const float delta = minDist - dist;
-	obj1.AddPosition(0.5f * delta * n);
-	obj2.AddPosition(-0.5f * delta * n);
+
+	const float massMod1 = -obj1.GetMass() / (obj1.GetMass() + obj2.GetMass());
+	const float massMod2 =  obj2.GetMass() / (obj1.GetMass() + obj2.GetMass());
+
+	obj1.AddPosition(massMod2 * delta * n);
+	obj2.AddPosition(massMod1 * delta * n);
 }
 
 bool VerletSolver::CheckCollision(glm::vec2 pos, float radius)
@@ -194,6 +228,29 @@ void VerletSolver::SolveNANs()
 			EIS_WARN("Nan position detected!");
 			obj.SetPosition(glm::vec2(0.0f));
 			obj.StopMovement();
+		}
+	}
+}
+
+void VerletSolver::RenderPhysicsObjects() const
+{
+	for (const VerletObject& obj : m_PhysicsObjectPool)
+		Eis::Renderer2D::DrawCircle(obj.GetPosition(), glm::vec2(obj.GetDiameter()), glm::vec4(obj.GetColor(), 1.0f));
+}
+
+void VerletSolver::DebugGrid() const
+{
+	for (int y = 0; y < m_Grid.GetHeight(); y++)
+	{
+		for (int x = 0; x < m_Grid.GetWidth(); x++)
+		{
+			glm::vec4 color;
+			if (m_Grid[y][x].objects.size())
+				color = glm::vec4(0.2f, 0.8f, 0.2f, 0.8f);
+			else
+				color = glm::vec4(0.06f, 0.06f, 0.06f, 0.5f);
+
+			Eis::Renderer2D::DrawQuad({ x * 2 - m_ConstraintDimensions.x + 1.0f, y * 2 - m_ConstraintDimensions.y + 1.0f }, glm::vec2(2.0f), color);
 		}
 	}
 }

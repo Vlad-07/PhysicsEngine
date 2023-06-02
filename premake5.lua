@@ -22,8 +22,8 @@ IncludeDir["Glad"] = "Eis/Eis/vendor/Glad/include"
 IncludeDir["ImGui"] = "Eis/Eis/vendor/imgui"
 IncludeDir["glm"] = "Eis/Eis/vendor/glm"
 IncludeDir["stb_image"] = "Eis/Eis/vendor/stb_image"
-IncludeDir["stb_image_resize"] = "Eis/vendor/stb_image_resize"
-IncludeDir["stb_image_write"] = "Eis/vendor/stb_image_write"
+IncludeDir["stb_image_resize"] = "Eis/Eis/vendor/stb_image_resize"
+IncludeDir["stb_image_write"] = "Eis/Eis/vendor/stb_image_write"
 
 group "Dependencies"
 	include "Eis/Eis/vendor/GLFW"
@@ -43,27 +43,27 @@ project "Eis"
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "Eispch.h"
-	pchsource "Eis/src/Eispch.cpp"
+	pchsource "Eis/Eis/src/Eispch.cpp"
 
 	files
 	{
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/vendor/stb_image/**.h",
-		"%{prj.name}/vendor/stb_image/**.cpp",
-		"%{prj.name}/vendor/stb_image_resize/**.h",
-		"%{prj.name}/vendor/stb_image_resize/**.cpp",
-		"%{prj.name}/vendor/stb_image_write/**.h",
-		"%{prj.name}/vendor/stb_image_write/**.cpp",
-		"%{prj.name}/vendor/glm/glm/**.hpp",
-		"%{prj.name}/vendor/glm/glm/**.inl"
+		"Eis/%{prj.name}/src/**.h",
+		"Eis/%{prj.name}/src/**.cpp",
+		"Eis/%{prj.name}/vendor/stb_image/**.h",
+		"Eis/%{prj.name}/vendor/stb_image/**.cpp",
+		"Eis/%{prj.name}/vendor/stb_image_resize/**.h",
+		"Eis/%{prj.name}/vendor/stb_image_resize/**.cpp",
+		"Eis/%{prj.name}/vendor/stb_image_write/**.h",
+		"Eis/%{prj.name}/vendor/stb_image_write/**.cpp",
+		"Eis/%{prj.name}/vendor/glm/glm/**.hpp",
+		"Eis/%{prj.name}/vendor/glm/glm/**.inl"
 
 	}
 
 	includedirs
 	{
-		"%{prj.name}/src",
-		"%{prj.name}/vendor/spdlog/include",
+		"Eis/%{prj.name}/src",
+		"Eis/%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}",
@@ -126,7 +126,8 @@ project "PhysicsEngine"
 		"Eis/Eis/src",
 		"Eis/Eis/vendor/spdlog/include",
 		"Eis/Eis/vendor/imgui",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{prj.name}/src"
 	}
 
 	links

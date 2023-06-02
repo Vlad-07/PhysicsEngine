@@ -21,6 +21,7 @@ public:
 
 	void AddObject(glm::vec2 pos = glm::vec2(0.0f), float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f)) { m_PhysicsObjectPool.push_back(VerletObject(m_PhysicsObjectPool.size(), pos, diameter, accel)); }
 	void ClearObjects() { m_PhysicsObjectPool.clear(); }
+	void DeleteObject(int id) { if (m_PhysicsObjectPool.size()) m_PhysicsObjectPool.erase(m_PhysicsObjectPool.begin() + id); }
 
 	void AddChainLink(int objId1, int objId2, float dist = 0.0f) { m_ChainLinkPool.push_back(ChainLink(objId1, objId2, m_PhysicsObjectPool, dist)); }
 	void ClearChainLinks() { m_ChainLinkPool.clear(); }
@@ -33,14 +34,19 @@ public:
 
 	inline auto GetConstraintDimensions() const { return m_ConstraintDimensions; }
 	inline auto GetObjectPool() const { return m_PhysicsObjectPool; }
-	inline auto& GetGrid() { return m_Grid; }
 	inline auto& GetObjectRef(int id) { return m_PhysicsObjectPool[id]; }
 	inline auto GetCollisionDetection() const { return m_Collisions; }
 	inline auto GetGridStatus() const { return m_EnableGridPartitioning; }
+	inline auto GetPause() const { return m_Pause; }
 
-	inline void SetConstraintDimensions(glm::vec2 dimensions) { m_ConstraintDimensions = dimensions; }
+	inline void SetConstraintDimensions(glm::vec2 dimensions) { m_ConstraintDimensions = dimensions; m_Grid.SetGridSize((int)m_ConstraintDimensions.x, (int)m_ConstraintDimensions.y); }
 	inline void SetCollisionDetection(bool collisions) { m_Collisions = collisions; }
 	inline void SetGridStatus(bool enabled) { m_EnableGridPartitioning = enabled; }
+	inline void SetPause(bool pause) { m_Pause = pause; }
+
+	void RenderPhysicsObjects() const;
+	void DebugGrid() const;
+
 
 private:
 	void Update(Eis::TimeStep ts);
@@ -66,4 +72,6 @@ private:
 	glm::vec2 m_Gravity;
 	glm::vec2 m_ConstraintDimensions;
 	bool m_Collisions;
+
+	bool m_Pause;
 };
