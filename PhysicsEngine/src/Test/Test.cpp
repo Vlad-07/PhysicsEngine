@@ -30,11 +30,11 @@ void Test::OnUpdate(Eis::TimeStep ts)
 	// Flood
 	if (m_Flood)
 	{
-		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec2(FLT_EPSILON));
-		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec2(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), 0.0f, m_PreviewDiameter, glm::vec2(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), 0.0f, m_PreviewDiameter, glm::vec2(FLT_EPSILON));
 																																						  
-		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec2(FLT_EPSILON));
-		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), m_PreviewDiameter, glm::vec2(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos - glm::vec2(m_PreviewDiameter / 2.0f - 0.1f,  m_PreviewDiameter / 2.0f - 0.1f), 0.0f, m_PreviewDiameter, glm::vec2(FLT_EPSILON));
+		m_PhysicsSolver.AddObject(m_PreviewPos + glm::vec2(m_PreviewDiameter / 2.0f - 0.1f, -m_PreviewDiameter / 2.0f - 0.1f), 0.0f, m_PreviewDiameter, glm::vec2(FLT_EPSILON));
 	}
 
 	m_PhysicsSolver.UpdatePhysics(Eis::TimeStep(0.0136f), m_PhysicsSubsteps); // fully deterministic engine
@@ -154,7 +154,7 @@ void Test::OnImGuiRender()
 		{
 			if (!m_PhysicsSolver.CheckCollision({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter * 1.5f }, objDiameter))
 			{
-				m_PhysicsSolver.AddObject({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter * 1.5f }, objDiameter, glm::vec2(50000.0f, 0.0f));
+				m_PhysicsSolver.AddObject({ -m_PhysicsSolver.GetConstraintDimensions().x + objDiameter, m_PhysicsSolver.GetConstraintDimensions().y * ySpawnPos - i * objDiameter * 1.5f }, 0.0f, objDiameter, glm::vec2(50000.0f, 0.0f));
 				m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetColor(m_ColorMem[m_PhysicsSolver.GetObjectPool().size() - 1]);
 			}
 		}

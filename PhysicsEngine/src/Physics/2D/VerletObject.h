@@ -7,8 +7,8 @@ class VerletObject
 {
 public:
 	VerletObject() = default;
-	VerletObject(uint32_t id, glm::vec2 pos, float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f));
-	~VerletObject() = default;
+	VerletObject(uint32_t id, glm::vec2 pos, float rotation = 0.0f, float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f));
+	virtual ~VerletObject() = default;
 
 	void UpdatePosition(Eis::TimeStep ts);
 	void Accelerate(glm::vec2 accel);
@@ -18,6 +18,7 @@ public:
 	inline glm::vec2 GetAcceleration() const { return m_Acceleration; }
 	inline glm::vec2 GetVelocity() const { return m_Position - m_LastPosition; }
 	inline glm::vec3 GetColor() const { return m_Color; }
+	inline float GetRotation() const { return m_Rotation; }
 	inline float GetDiameter() const { return m_Diameter; }
 	inline float GetRadius() const { return m_Diameter / 2.0f; }
 	inline float GetMass() const { return m_Mass; }
@@ -27,6 +28,7 @@ public:
 	void SetId(uint32_t id) { m_Id = id; }
 	void SetColor(glm::vec3 color) { m_Color = color; }
 	void SetMass(float mass) { m_Mass = mass; }
+	void SetRotation(float rotation) { m_Rotation = rotation; }
 	void SetGravityInfluence(bool affectedByGravity) { m_AffectedByGravity = affectedByGravity; }
 	void SetSlowdown(float slowFactor) { m_Slowdown = slowFactor; }
 	void SetPosition(glm::vec2 pos) { if (!m_Locked) m_Position = pos; }
@@ -44,6 +46,7 @@ private:
 	glm::vec2 m_LastPosition;
 	glm::vec2 m_Acceleration;
 	glm::vec3 m_Color;
+	float m_Rotation; // rads
 	float m_Diameter;
 	float m_Mass;
 	float m_Slowdown;

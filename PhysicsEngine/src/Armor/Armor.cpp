@@ -89,7 +89,7 @@ void Armor::OnImGuiRender()
 
 		m_ProjectileActive = true;
 		maxX = -100.0f;
-		m_PhysicsSolver.AddObject(glm::vec2(-50.0f, 0.0f), m_ShellRadius, glm::vec2(300000.0f, 0.0f));
+		m_PhysicsSolver.AddObject(glm::vec2(-50.0f, 0.0f), 0.0f, m_ShellRadius, glm::vec2(300000.0f, 0.0f));
 		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetMass(20.0f);
 		m_PhysicsSolver.GetObjectRef(m_PhysicsSolver.GetObjectPool().size() - 1).SetGravityInfluence(false);
 	}

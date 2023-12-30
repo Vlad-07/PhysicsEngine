@@ -1,7 +1,7 @@
 #include "VerletObject.h"
 
-VerletObject::VerletObject(uint32_t id, glm::vec2 pos, float diameter, glm::vec2 accel)
-	: m_Id(id), m_Position(pos), m_LastPosition(pos), m_Diameter(diameter), m_Acceleration(accel),
+VerletObject::VerletObject(uint32_t id, glm::vec2 pos, float rotation, float diameter, glm::vec2 accel)
+	: m_Id(id), m_Position(pos), m_LastPosition(pos), m_Rotation(rotation), m_Diameter(diameter), m_Acceleration(accel),
 	  m_Color(1.0f), m_Mass(1.0f), m_Slowdown(1.0f), m_Locked(false), m_AffectedByGravity(true)
 {
 }

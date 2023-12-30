@@ -19,7 +19,7 @@ public:
 	void UpdatePhysics(Eis::TimeStep ts, int subSteps);
 	
 
-	void AddObject(glm::vec2 pos = glm::vec2(0.0f), float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f)) { m_PhysicsObjectPool.push_back(VerletObject(m_PhysicsObjectPool.size(), pos, diameter, accel)); }
+	void AddObject(glm::vec2 pos = glm::vec2(0.0f), float rotation = 0.0f, float diameter = 1.0f, glm::vec2 accel = glm::vec2(0.0f)) { m_PhysicsObjectPool.push_back(VerletObject(m_PhysicsObjectPool.size(), pos, rotation, diameter, accel)); }
 	void ClearObjects() { m_PhysicsObjectPool.clear(); }
 	void DeleteObject(int id) { if (m_PhysicsObjectPool.size()) m_PhysicsObjectPool.erase(m_PhysicsObjectPool.begin() + id); }
 
